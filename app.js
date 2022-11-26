@@ -1,11 +1,30 @@
 const express = require('express');
 const {success, getUniqueId} = require('./helper')
+const {Sequelize} = require('sequelize');
 const app = express();
 let pokemons = require('./mock-pokemon');
 const bodyparser = require('body-parser');
 const morgan = require('morgan');
 const favicon = require('serve-favicon')
 const port = 3000;
+
+const sequelize = new Sequelize(
+	'pokedex',
+	'laye',
+	'mangane12',
+	{
+		host: 'localhost',
+		dialect: 'mariadb',
+		dialectOptions: {
+			timeZone: 'Etc/GMT-2'
+		},
+		logging: false
+	}
+)
+
+sequelize.authenticate()
+		 .then(_ => console.log(`La connexion à la base de données a bien été établie !`))
+		 .catch(error => console.error(`Impossible de se connecter à la base de données !`));
 
 app
 	.use(favicon(__dirname+'/favicon.ico'))
@@ -50,7 +69,7 @@ app.delete('/api/pokemons/:id', (req, res) => {
 	pokemons.filter(pokemon => pokemon.id !== id);
 	const message = `le pokemon ${pokemonDeleted.name} a été supprimer !`;
 	res.status(200).json(success(message, pokemonDeleted));
-	
+
 })
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
