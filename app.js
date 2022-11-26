@@ -1,16 +1,19 @@
 const express = require('express');
-const {success} = require('./helper')
+const {success, getUniqueId} = require('./helper')
 const app = express();
-const pokemons = require('./mock-pokemon');
+let pokemons = require('./mock-pokemon');
+const bodyparser = require('body-parser');
 const morgan = require('morgan');
 const favicon = require('serve-favicon')
 const port = 3000;
 
 app
 	.use(favicon(__dirname+'/favicon.ico'))
-	.use(morgan('dev'));
+	.use(morgan('dev'))
+	.use(bodyparser.json());
 
 app.get('/', (req, res) => res.send('Hello World 👍'));
+
 app.get('/api/pokemons/:id', (req, res) => {
 	const id = parseInt(req.params.id);
 	const pokemon = pokemons.find(pokemon => pokemon.id === id);
@@ -23,6 +26,32 @@ app.get('/api/pokemons', (req, res)=>{
 	res.json(success(message, pokemons));
 })
 
+app.post('/api/pokemons', (req, res)=>{
+	const id = getUniqueId(pokemons);
+	const pokemonCreated = {...req.body, ...{id: id, created: new Date()}};
+	pokemons.push(pokemonCreated);
+	const message = "Un nouveau pokemon a été ajouter !";
+	res.status(201).json(success(message, pokemonCreated));
+})
+
+app.put('/api/pokemons/:id', (req, res)=>{
+	const id = parseInt(req.params.id);
+	const pokemonUpdated = {...req.body, id: id};
+	pokemons = pokemons.map(pokemon => {
+		return pokemon.id === id ? pokemonUpdated : pokemon
+	});
+	const message = `Le pokemon ${pokemonUpdated.name} a bien été modifier`;
+	res.status(200).json(success(message, pokemonUpdated));
+})
+
+app.delete('/api/pokemons/:id', (req, res) => {
+	const id = parseInt(req.params.id);
+	const pokemonDeleted = pokemons.find(p => p.id === id);
+	pokemons.filter(pokemon => pokemon.id !== id);
+	const message = `le pokemon ${pokemonDeleted.name} a été supprimer !`;
+	res.status(200).json(success(message, pokemonDeleted));
+	
+})
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
 
